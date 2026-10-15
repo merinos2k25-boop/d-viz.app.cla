@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Döviz App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1E2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Döviz App">
+<meta name="description" content="TL, Dolar ve Euro arasında anlık çeviri.">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%230F1E2E'/><circle cx='256' cy='256' r='150' fill='%23172A3F' stroke='%23F2B84B' stroke-width='26'/><g fill='none' stroke='%23F2B84B' stroke-width='24' stroke-linecap='round'><circle cx='256' cy='256' r='50'/><path d='M291.4 220.6L318.2 193.8M220.6 220.6L193.8 193.8M291.4 291.4L318.2 318.2M220.6 291.4L193.8 318.2'/></g></svg>">
+<style>
+:root{
+  --bg:#0F1E2E; --panel:#172A3F; --panel2:#1E3550; --ink:#EAF1F7; --mute:#8FA3B8;
+  --accent:#F2B84B; --ok:#58D6A0; --warn:#F2B84B; --err:#FF7A7A;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overscroll-behavior:none}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;
+  display:flex;flex-direction:column;
+  height:100dvh;overflow:hidden;
+  padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+  max-width:520px;margin:0 auto;
+}
+header{display:flex;align-items:center;justify-content:space-between;padding:calc(max(env(safe-area-inset-top,0px),24px) + 6px) 18px 6px}
+h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+#status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);background:var(--panel);border:0;color:var(--mute);padding:8px 12px;border-radius:999px;font-family:inherit;cursor:pointer}
+#status:focus-visible,.row:focus-visible,.key:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.dot.ok{background:var(--ok)} .dot.err{background:var(--err)}
+.dot.load{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+#rates{display:flex;gap:8px;padding:6px 18px 10px;font-size:13px;color:var(--mute);min-height:34px}
+#rates span{background:var(--panel);padding:6px 10px;border-radius:10px;white-space:nowrap}
+#rates b{color:var(--ink);font-weight:600}
+.rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 14px}
+.row{
+  flex:1 1 0;min-height:56px;max-height:76px;display:flex;align-items:center;gap:10px;width:100%;
+  background:var(--panel);border:2px solid transparent;border-radius:14px;
+  padding:0 14px;color:inherit;font-family:inherit;text-align:left;cursor:pointer;
+  transition:background .15s,border-color .15s;
+}
+.row.active{background:var(--panel2);border-color:var(--accent)}
+.flag{font-size:24px;line-height:1}
+.who{display:flex;flex-direction:column;min-width:58px;line-height:1.2}
+.who b{font-size:15px;letter-spacing:.02em}
+.who small{font-size:11px;color:var(--mute)}
+.amt{flex:1;text-align:right;font-weight:600;font-size:28px;letter-spacing:-.02em;overflow:hidden;white-space:nowrap;text-overflow:clip}
+.amt.m{font-size:23px}.amt.s{font-size:18px}
+.row.active .amt{color:var(--accent)}
+.row.active .amt::after{content:"";display:inline-block;width:2px;height:.9em;margin-left:3px;vertical-align:-.1em;background:var(--accent);animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.sym{width:18px;text-align:center;color:var(--mute);font-size:16px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:8px;padding:10px 14px 14px;height:clamp(240px,42dvh,380px)}
+.key{
+  border:0;border-radius:16px;background:var(--panel);color:var(--ink);
+  font:inherit;font-size:26px;font-weight:500;cursor:pointer;
+  transition:transform .06s,background .1s;
+}
+.key:active{transform:scale(.95);background:var(--panel2)}
+.key.fn{background:transparent;color:var(--mute);font-size:22px}
+.key.fn:active{background:var(--panel)}
+@media (max-height:600px){h1{font-size:17px}#rates{display:none}.amt{font-size:24px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Döviz App</h1>
+  <button id="status" type="button" aria-live="polite" title="Kurları yenile"><span class="dot load" id="dot"></span><span id="stxt">Güncelleniyor…</span></button>
+</header>
+<div id="rates" aria-label="Güncel kurlar"></div>
+<main class="rows" id="rows"></main>
+<div class="pad" id="pad"></div>
+
+<script>
+(function(){
+  "use strict";
+  var CUR=[
+    {c:"TRY",f:"🇹🇷",n:"Türk Lirası",s:"₺"},
+    {c:"USD",f:"🇺🇸",n:"ABD Doları",s:"$"},
+    {c:"EUR",f:"🇪🇺",n:"Euro",s:"€"}
+  ];
+  var CACHE_KEY="doviz-app:rates:v1", REFRESH_MS=5*60*1000;
+  var rates=null, fetchedAt=0, source="", state="load";
+  var active="TRY", input="100", fresh=true, inflight=false;
+
+  /* ---------- storage (hata vermeden) ---------- */
+  function load(){try{var r=JSON.parse(localStorage.getItem(CACHE_KEY));
+    if(r&&r.rates&&isFinite(r.rates.TRY)&&isFinite(r.rates.EUR)){rates=r.rates;fetchedAt=r.at;source=r.src;return true}}catch(e){}return false}
+  function save(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({rates:rates,at:fetchedAt,src:source}))}catch(e){}}
+
+  /* ---------- veri kaynakları (sırayla denenir) ---------- */
+  function getJSON(url){
+    var ctl=new AbortController(), t=setTimeout(function(){ctl.abort()},8000);
+    return fetch(url,{signal:ctl.signal,cache:"no-store"}).then(function(r){
+      clearTimeout(t); if(!r.ok) throw new Error("HTTP "+r.status); return r.json();
+    },function(e){clearTimeout(t);throw e});
+  }
+  var SOURCES=[
+    {name:"open.er-api.com",url:"https://open.er-api.com/v6/latest/USD",
+     pick:function(d){return d&&d.result==="success"&&d.rates?{TRY:d.rates.TRY,EUR:d.rates.EUR}:null}},
+    {name:"frankfurter.dev",url:"https://api.frankfurter.dev/v1/latest?base=USD&symbols=TRY,EUR",
+     pick:function(d){return d&&d.rates?{TRY:d.rates.TRY,EUR:d.rates.EUR}:null}},
+    {name:"currency-api",url:"https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+     pick:function(d){return d&&d.usd?{TRY:d.usd.try,EUR:d.usd.eur}:null}}
+  ];
+  function valid(r){return r&&isFinite(r.TRY)&&isFinite(r.EUR)&&r.TRY>0&&r.EUR>0}
+  function refresh(){
+    if(inflight) return; inflight=true; state="load"; paintStatus();
+    var i=0;
+    (function next(){
+      if(i>=SOURCES.length){
+        inflight=false; state=rates?"stale":"err"; paintAll(); return;
+      }
+      var s=SOURCES[i++];
+      getJSON(s.url).then(function(d){
+        var r=s.pick(d); if(!valid(r)) throw new Error("bad data");
+        rates={USD:1,TRY:+r.TRY,EUR:+r.EUR}; fetchedAt=Date.now(); source=s.name;
+        save(); inflight=false; state="ok"; paintAll();
+      }).catch(next);
+    })();
+  }
+
+  /* ---------- hesap ---------- */
+  function num(s){var v=parseFloat(String(s).replace(",","."));return isFinite(v)?v:0}
+  function convert(v,from,to){
+    if(!rates) return null;
+    return v/rates[from]*rates[to];
+  }
+  var nf0=new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
+  function fmtInput(s){
+    var p=s.split(","), i=nf0.format(Number(p[0]||0));
+    return p.length>1? i+","+p[1] : i;
+  }
+  function fmtOut(v){
+    if(v==null) return "—";
+    var d=(v>0&&v<1)?4:2;
+    return new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:d}).format(v);
+  }
+  function fmtRate(v){return new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:4}).format(v)}
+
+  /* ---------- arayüz ---------- */
+  var rowsEl=document.getElementById("rows"), padEl=document.getElementById("pad"),
+      ratesEl=document.getElementById("rates"), dot=document.getElementById("dot"),
+      stxt=document.getElementById("stxt");
+  var rowEls={}, amtEls={};
+
+  CUR.forEach(function(c){
+    var b=document.createElement("button");
+    b.type="button"; b.className="row"; b.setAttribute("aria-label",c.n);
+    b.innerHTML='<span class="flag">'+c.f+'</span><span class="who"><b>'+c.c+'</b><small>'+c.n+'</small></span><span class="amt"></span><span class="sym">'+c.s+'</span>';
+    b.addEventListener("click",function(){select(c.c)});
+    rowsEl.appendChild(b); rowEls[c.c]=b; amtEls[c.c]=b.querySelector(".amt");
+  });
+
+  var KEYS=["1","2","3","4","5","6","7","8","9",",","0","⌫"];
+  KEYS.forEach(function(k){
+    var b=document.createElement("button");
+    b.type="button"; b.className="key"+(k==="⌫"?" fn":""); b.textContent=k;
+    b.setAttribute("aria-label",k==="⌫"?"Sil":k===","?"Virgül":k);
+    b.addEventListener("click",function(){press(k)});
+    if(k==="⌫"){ /* basılı tutunca temizle */
+      var t;
+      b.addEventListener("pointerdown",function(){t=setTimeout(function(){t=null;input="0";fresh=false;buzz();paintRows()},550)});
+      ["pointerup","pointerleave","pointercancel"].forEach(function(ev){b.addEventListener(ev,function(){clearTimeout(t)})});
+    }
+    padEl.appendChild(b);
+  });
+
+  function buzz(){try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}}
+
+  function select(code){
+    if(code===active) return;
+    var v=convert(num(input),active,code);
+    if(v==null){active=code;input="0";fresh=true;paintRows();return}
+    input=String(Math.round(v*100)/100).replace(".",",");
+    active=code; fresh=true; buzz(); paintRows();
+  }
+
+  function press(k){
+    buzz();
+    if(k==="⌫"){
+      if(fresh){input="0"}else{input=input.slice(0,-1);if(input===""||input==="-")input="0"}
+      fresh=false;
+    }else if(k===","){
+      if(fresh){input="0,";fresh=false}
+      else if(input.indexOf(",")<0){input+=","}
+    }else{
+      if(fresh){input=k;fresh=false}
+      else{
+        var p=input.split(",");
+        if(p.length>1){ if(p[1].length>=4) return; input+=k }
+        else{ if(p[0].length>=12) return; input=(input==="0")?k:input+k }
+      }
+    }
+    paintRows();
+  }
+
+  function paintRows(){
+    var v=num(input);
+    CUR.forEach(function(c){
+      var el=amtEls[c.c], txt;
+      txt = c.c===active ? fmtInput(input) : fmtOut(convert(v,active,c.c));
+      el.textContent=txt;
+      el.className="amt"+(txt.length>15?" s":txt.length>11?" m":"");
+      rowEls[c.c].classList.toggle("active",c.c===active);
+      rowEls[c.c].setAttribute("aria-pressed",c.c===active);
+    });
+  }
+
+  function paintRates(){
+    if(!rates){ratesEl.innerHTML="";return}
+    ratesEl.innerHTML='<span>1 $ = <b>'+fmtRate(rates.TRY/rates.USD)+' ₺</b></span><span>1 € = <b>'+fmtRate(rates.TRY/rates.EUR)+' ₺</b></span>';
+  }
+
+  function paintStatus(){
+    dot.className="dot "+(state==="ok"?"ok":state==="err"?"err":state==="load"?"load":"");
+    if(state==="load"){stxt.textContent="Güncelleniyor…";return}
+    if(state==="err"){stxt.textContent="Kur alınamadı · yenile";return}
+    var d=new Date(fetchedAt);
+    var hm=d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+    var same=new Date().toDateString()===d.toDateString();
+    var when=same?hm:d.toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"})+" "+hm;
+    stxt.textContent=(state==="ok"?"Güncel · ":"Çevrimdışı · ")+when;
+  }
+
+  function paintAll(){paintRows();paintRates();paintStatus()}
+
+  /* ---------- olaylar ---------- */
+  document.getElementById("status").addEventListener("click",refresh);
+  document.addEventListener("keydown",function(e){
+    if(e.ctrlKey||e.metaKey||e.altKey) return;
+    if(/^[0-9]$/.test(e.key)) press(e.key);
+    else if(e.key===","||e.key===".") press(",");
+    else if(e.key==="Backspace") press("⌫");
+    else if(e.key==="Escape"){input="0";fresh=false;paintRows()}
+  });
+  window.addEventListener("online",refresh);
+  window.addEventListener("offline",function(){if(rates){state="stale";paintStatus()}});
+  document.addEventListener("visibilitychange",function(){
+    if(!document.hidden&&Date.now()-fetchedAt>REFRESH_MS) refresh();
+  });
+  setInterval(function(){if(!document.hidden) refresh()},REFRESH_MS);
+
+  /* ---------- başlangıç ---------- */
+  if(load()) state="stale";
+  paintAll();
+  refresh();
+})();
+</script>
+</body>
+</html>

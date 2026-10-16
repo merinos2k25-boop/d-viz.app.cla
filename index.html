@@ -11,7 +11,7 @@
 <meta name="description" content="TL, Dolar ve Euro arasında anlık çeviri.">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%230F1E2E'/><circle cx='256' cy='256' r='150' fill='%23172A3F' stroke='%23F2B84B' stroke-width='26'/><g fill='none' stroke='%23F2B84B' stroke-width='24' stroke-linecap='round'><circle cx='256' cy='256' r='50'/><path d='M291.4 220.6L318.2 193.8M220.6 220.6L193.8 193.8M291.4 291.4L318.2 318.2M220.6 291.4L193.8 318.2'/></g></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%230F1E2E'/><g fill='%23172A3F' stroke='%23F2B84B' stroke-width='14'><circle cx='160' cy='172' r='88'/><circle cx='352' cy='172' r='88'/><circle cx='256' cy='344' r='88'/></g><g fill='%23F2B84B' font-family='Arial,sans-serif' font-weight='700' font-size='104' text-anchor='middle'><text x='160' y='208'>₺</text><text x='352' y='208'>$</text><text x='256' y='380'>€</text></g></svg>">
 <style>
 :root{
   --bg:#0F1E2E; --panel:#172A3F; --panel2:#1E3550; --ink:#EAF1F7; --mute:#8FA3B8;
@@ -29,7 +29,7 @@ body{
   max-width:520px;margin:0 auto;
 }
 header{display:flex;align-items:center;justify-content:space-between;padding:calc(max(env(safe-area-inset-top,0px),24px) + 6px) 18px 6px}
-h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}.logo{width:32px;height:32px;flex:none}
 #status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);background:var(--panel);border:0;color:var(--mute);padding:8px 12px;border-radius:999px;font-family:inherit;cursor:pointer}
 #status:focus-visible,.row:focus-visible,.key:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
@@ -37,7 +37,7 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
 .dot.load{animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.25}}
 #rates{display:flex;gap:8px;padding:6px 18px 10px;font-size:13px;color:var(--mute);min-height:34px}
-#rates span{background:var(--panel);padding:6px 10px;border-radius:10px;white-space:nowrap}
+#rates .chip{background:var(--panel);border:0;font:inherit;color:inherit;padding:6px 10px;border-radius:10px;white-space:nowrap;cursor:pointer}#rates .chip.man b{color:var(--accent)}
 #rates b{color:var(--ink);font-weight:600}
 .rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 14px}
 .row{
@@ -66,18 +66,45 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
 .key:active{transform:scale(.95);background:var(--panel2)}
 .key.fn{background:transparent;color:var(--mute);font-size:22px}
 .key.fn:active{background:var(--panel)}
-@media (max-height:600px){h1{font-size:17px}#rates{display:none}.amt{font-size:24px}}
+@media (max-height:600px){h1{font-size:17px}#rates{min-height:0;padding-bottom:6px}.amt{font-size:24px}}
+#sheet{position:fixed;inset:0;z-index:20;display:flex;justify-content:center;align-items:flex-start;padding:calc(max(env(safe-area-inset-top,0px),24px) + 56px) 14px 14px;background:rgba(5,12,20,.72)}
+#sheet[hidden]{display:none}
+.card{position:relative;width:min(100%,420px);background:var(--panel);border-radius:20px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.card h2{margin:0 0 14px;font-size:18px}
+.card label{display:block;font-size:13px;color:var(--mute);margin-bottom:10px}
+.f{display:flex;align-items:center;gap:8px;margin-top:6px;background:var(--bg);border:2px solid transparent;border-radius:12px;padding:0 12px}
+.f:focus-within{border-color:var(--accent)}
+.f input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:inherit;font-size:22px;font-weight:600;height:48px;-webkit-user-select:text;user-select:text}
+.f i{font-style:normal;color:var(--mute);font-size:18px}
+#sh-hint{margin:2px 0 0;font-size:12px;color:var(--mute);min-height:16px}
+#sh-err{margin:6px 0 0;font-size:13px;color:var(--err);min-height:16px}
+.btns{display:flex;gap:10px;margin-top:12px}
+.btn{flex:1;height:48px;border:0;border-radius:12px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;background:var(--panel2);color:var(--ink)}
+.btn.primary{background:var(--accent);color:#1b1405}
+.btn[hidden]{display:none}
+.x{position:absolute;top:10px;right:10px;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:var(--mute);font-size:18px;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <header>
-  <h1>Döviz App</h1>
+  <h1><svg class="logo" viewBox="60 70 392 380" aria-hidden="true"><g fill="#172A3F" stroke="#F2B84B" stroke-width="14"><circle cx="160" cy="172" r="88"/><circle cx="352" cy="172" r="88"/><circle cx="256" cy="344" r="88"/></g><g fill="#F2B84B" font-family="DejaVu Sans,Arial,sans-serif" font-weight="700" font-size="104" text-anchor="middle"><text x="160" y="208">₺</text><text x="352" y="208">$</text><text x="256" y="380">€</text></g></svg>Döviz App</h1>
   <button id="status" type="button" aria-live="polite" title="Kurları yenile"><span class="dot load" id="dot"></span><span id="stxt">Güncelleniyor…</span></button>
 </header>
 <div id="rates" aria-label="Güncel kurlar"></div>
 <main class="rows" id="rows"></main>
 <div class="pad" id="pad"></div>
+
+<div id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sh-t">
+  <div class="card">
+    <h2 id="sh-t">Kuru düzenle</h2>
+    <button class="x" id="sh-close" type="button" aria-label="Kapat">✕</button>
+    <label>1 $ (USD) =<span class="f"><input id="in-usd" inputmode="decimal" autocomplete="off" enterkeyhint="done"><i>₺</i></span></label>
+    <label>1 € (EUR) =<span class="f"><input id="in-eur" inputmode="decimal" autocomplete="off" enterkeyhint="done"><i>₺</i></span></label>
+    <p id="sh-hint"></p><p id="sh-err" role="alert"></p>
+    <div class="btns"><button class="btn" id="sh-live" type="button">Canlı kura dön</button><button class="btn primary" id="sh-save" type="button">Kaydet</button></div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -88,13 +115,13 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
     {c:"EUR",f:"🇪🇺",n:"Euro",s:"€"}
   ];
   var CACHE_KEY="doviz-app:rates:v1", REFRESH_MS=5*60*1000;
-  var rates=null, fetchedAt=0, source="", state="load";
+  var rates=null, live=null, manual=null, fetchedAt=0, source="", state="load";
   var active="TRY", input="100", fresh=true, inflight=false;
 
   /* ---------- storage (hata vermeden) ---------- */
   function load(){try{var r=JSON.parse(localStorage.getItem(CACHE_KEY));
-    if(r&&r.rates&&isFinite(r.rates.TRY)&&isFinite(r.rates.EUR)){rates=r.rates;fetchedAt=r.at;source=r.src;return true}}catch(e){}return false}
-  function save(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({rates:rates,at:fetchedAt,src:source}))}catch(e){}}
+    if(r&&r.rates&&isFinite(r.rates.TRY)&&isFinite(r.rates.EUR)){live=r.rates;fetchedAt=r.at;source=r.src;return true}}catch(e){}return false}
+  function save(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({rates:live,at:fetchedAt,src:source}))}catch(e){}}
 
   /* ---------- veri kaynakları (sırayla denenir) ---------- */
   function getJSON(url){
@@ -117,12 +144,12 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
     var i=0;
     (function next(){
       if(i>=SOURCES.length){
-        inflight=false; state=rates?"stale":"err"; paintAll(); return;
+        inflight=false; state=live?"stale":"err"; paintAll(); return;
       }
       var s=SOURCES[i++];
       getJSON(s.url).then(function(d){
         var r=s.pick(d); if(!valid(r)) throw new Error("bad data");
-        rates={USD:1,TRY:+r.TRY,EUR:+r.EUR}; fetchedAt=Date.now(); source=s.name;
+        live={USD:1,TRY:+r.TRY,EUR:+r.EUR}; fetchedAt=Date.now(); source=s.name; applyRates();
         save(); inflight=false; state="ok"; paintAll();
       }).catch(next);
     })();
@@ -216,11 +243,13 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
   }
 
   function paintRates(){
-    if(!rates){ratesEl.innerHTML="";return}
-    ratesEl.innerHTML='<span>1 $ = <b>'+fmtRate(rates.TRY/rates.USD)+' ₺</b></span><span>1 € = <b>'+fmtRate(rates.TRY/rates.EUR)+' ₺</b></span>';
+    if(!rates){ratesEl.innerHTML='<button class="chip" type="button">✎ Kuru elle gir</button>';return}
+    var c=manual?" man":"";
+    ratesEl.innerHTML='<button type="button" class="chip'+c+'">1 $ = <b>'+fmtRate(rates.TRY/rates.USD)+' ₺</b></button><button type="button" class="chip'+c+'">1 € = <b>'+fmtRate(rates.TRY/rates.EUR)+' ₺</b></button><button type="button" class="chip" aria-label="Kuru düzenle">✎</button>';
   }
 
   function paintStatus(){
+    if(manual){dot.className="dot";stxt.textContent="Manuel kur · canlıya dön";return}
     dot.className="dot "+(state==="ok"?"ok":state==="err"?"err":state==="load"?"load":"");
     if(state==="load"){stxt.textContent="Güncelleniyor…";return}
     if(state==="err"){stxt.textContent="Kur alınamadı · yenile";return}
@@ -233,9 +262,41 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
 
   function paintAll(){paintRows();paintRates();paintStatus()}
 
+  /* ---------- manuel kur ---------- */
+  var MKEY="doviz-app:manual:v1";
+  var sheet=document.getElementById("sheet"), inUsd=document.getElementById("in-usd"), inEur=document.getElementById("in-eur"),
+      errEl=document.getElementById("sh-err"), hintEl=document.getElementById("sh-hint"), liveBtn=document.getElementById("sh-live");
+  function applyRates(){ rates = manual ? {USD:1,TRY:manual.usd,EUR:manual.usd/manual.eur} : live; }
+  function loadManual(){try{var m=JSON.parse(localStorage.getItem(MKEY));
+    if(m&&isFinite(m.usd)&&isFinite(m.eur)&&m.usd>0&&m.eur>0) manual={usd:m.usd,eur:m.eur}}catch(e){}}
+  function saveManual(){try{if(manual)localStorage.setItem(MKEY,JSON.stringify(manual));else localStorage.removeItem(MKEY)}catch(e){}}
+  function toStr(v){return String(Math.round(v*10000)/10000).replace(".",",")}
+  function openSheet(){
+    inUsd.value=rates?toStr(rates.TRY/rates.USD):""; inEur.value=rates?toStr(rates.TRY/rates.EUR):"";
+    errEl.textContent="";
+    hintEl.textContent=live?"Canlı: 1 $ = "+fmtRate(live.TRY/live.USD)+" ₺ · 1 € = "+fmtRate(live.TRY/live.EUR)+" ₺":"";
+    liveBtn.hidden=!manual; sheet.hidden=false; inUsd.focus(); inUsd.select();
+  }
+  function closeSheet(){sheet.hidden=true; if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}
+  function saveSheet(){
+    var u=num(inUsd.value), e=num(inEur.value);
+    if(!(u>0&&u<1e6&&e>0&&e<1e6)){errEl.textContent="Geçerli bir kur girin (0'dan büyük).";return}
+    manual={usd:u,eur:e}; saveManual(); applyRates(); closeSheet(); paintAll();
+  }
+  function clearManual(){
+    manual=null; saveManual(); applyRates(); closeSheet(); paintAll();
+    if(!live||Date.now()-fetchedAt>REFRESH_MS) refresh();
+  }
+  ratesEl.addEventListener("click",function(e){if(e.target.closest(".chip"))openSheet()});
+  document.getElementById("sh-save").addEventListener("click",saveSheet);
+  document.getElementById("sh-close").addEventListener("click",closeSheet);
+  liveBtn.addEventListener("click",clearManual);
+  sheet.addEventListener("click",function(e){if(e.target===sheet)closeSheet()});
+
   /* ---------- olaylar ---------- */
-  document.getElementById("status").addEventListener("click",refresh);
+  document.getElementById("status").addEventListener("click",function(){if(manual)clearManual();else refresh()});
   document.addEventListener("keydown",function(e){
+    if(!sheet.hidden){if(e.key==="Escape")closeSheet();else if(e.key==="Enter")saveSheet();return}
     if(e.ctrlKey||e.metaKey||e.altKey) return;
     if(/^[0-9]$/.test(e.key)) press(e.key);
     else if(e.key===","||e.key===".") press(",");
@@ -250,7 +311,7 @@ h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
   setInterval(function(){if(!document.hidden) refresh()},REFRESH_MS);
 
   /* ---------- başlangıç ---------- */
-  if(load()) state="stale";
+  var hasLive=load(); loadManual(); applyRates(); if(hasLive) state="stale";
   paintAll();
   refresh();
 })();
